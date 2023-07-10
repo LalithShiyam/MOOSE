@@ -22,7 +22,7 @@ import os
 import SimpleITK
 from rich.progress import Progress
 
-from dicom2nifti_modified.dicom2nifti.convert_dir import convert_directory
+from moosez.dicom2nifti_modified.dicom2nifti.convert_dir import convert_directory
 
 
 def read_dicom_folder(folder_path: str) -> SimpleITK.Image:

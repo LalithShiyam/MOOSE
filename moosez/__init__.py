@@ -1,4 +1,5 @@
 from . import constants
+from . import dicom2nifti_modified
 from . import display
 from . import download
 from . import file_utilities
