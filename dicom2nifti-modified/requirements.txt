@@ -1,0 +1,5 @@
+nibabel
+numpy
+scipy
+python-gdcm
+pydicom >= 2.2.0

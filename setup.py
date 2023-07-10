@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 
-
 setup(
     name='moosez',
     version='2.1.10',
@@ -25,7 +24,6 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
     ],
-
     keywords='moosez model-zoo nnUNet medical-imaging tumor-segmentation organ-segmentation bone-segmentation'
              ' lung-segmentation muscle-segmentation fat-segmentation vessel-segmentation'
              ' vertebral-segmentation rib-segmentation'
@@ -50,8 +48,7 @@ setup(
         'colorama~=0.4.6',
         'dask~=2023.6.0',
         'rich',
-        'pandas',
-        'dicom2nifti~=2.4.8'
+        'pandas'
     ],
     entry_points={
         'console_scripts': [
