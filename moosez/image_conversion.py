@@ -18,12 +18,11 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import os
-import sys
+
 import SimpleITK
-import pydicom
 from rich.progress import Progress
-import dicom2nifti
-from moosez import constants
+
+from dicom2nifti_modified.dicom2nifti.convert_dir import convert_directory
 
 
 def read_dicom_folder(folder_path: str) -> SimpleITK.Image:
@@ -51,13 +50,7 @@ def non_nifti_to_nifti(input_path: str, output_directory: str = None) -> None:
     output_image_basename = "output"
     output_image = None  # initialize output_image
     if os.path.isdir(input_path):
-        image_probe = os.listdir(input_path)[0]
-        modality_tag = pydicom.read_file(os.path.join(input_path, image_probe)).Modality
-        if modality_tag == 'PT':
-            output_image_basename = f"{constants.TRACER_FDG}_PET_{subject_name}.nii"
-        elif modality_tag == 'CT':
-            output_image_basename = f"{modality_tag}_{subject_name}.nii"
-        dcm2niix(input_path, output_image_basename)
+        dcm2niix(input_path)
         return
     elif os.path.isfile(input_path):
         if input_path.endswith('.nii.gz') or input_path.endswith('.nii'):
@@ -100,12 +93,10 @@ def standardize_to_nifti(parent_dir: str):
             progress.update(task, advance=1, description=f"[white] Processing {subject}...")
 
 
-def dcm2niix(input_path: str, output_image_basename: str) -> None:
+def dcm2niix(input_path: str) -> None:
     """
     Converts DICOM images into Nifti images using dcm2niix
     :param input_path: Path to the folder with the dicom files to convert
     """
     output_dir = os.path.dirname(input_path)
-    output_file = os.path.join(output_dir, output_image_basename)
-
-    dicom2nifti.dicom_series_to_nifti(input_path, output_file, reorient_nifti=True)
+    convert_directory(input_path, output_dir, compression=False)
