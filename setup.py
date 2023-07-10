@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='moosez',
-    version='2.1.8',
+    version='2.1.9',
     author='Lalith Kumar Shiyam Sundar',
     author_email='Lalith.shiyamsundar@meduniwien.ac.at',
     description='An AI-inference engine for 3D clinical and preclinical whole-body segmentation tasks',
@@ -51,7 +51,7 @@ setup(
         'dask~=2023.6.0',
         'rich',
         'pandas',
-        'dicom2nifti~=2.4.8'
+        'dcm2niix'
     ],
     entry_points={
         'console_scripts': [

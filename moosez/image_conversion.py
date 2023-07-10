@@ -17,13 +17,13 @@
 #
 # ----------------------------------------------------------------------------------------------------------------------
 
+import json
 import os
-import sys
+from pathlib import Path
+
 import SimpleITK
-import pydicom
+import dcm2niix
 from rich.progress import Progress
-import dicom2nifti
-from moosez import constants
 
 
 def read_dicom_folder(folder_path: str) -> SimpleITK.Image:
@@ -51,13 +51,7 @@ def non_nifti_to_nifti(input_path: str, output_directory: str = None) -> None:
     output_image_basename = "output"
     output_image = None  # initialize output_image
     if os.path.isdir(input_path):
-        image_probe = os.listdir(input_path)[0]
-        modality_tag = pydicom.read_file(os.path.join(input_path, image_probe)).Modality
-        if modality_tag == 'PT':
-            output_image_basename = f"{constants.TRACER_FDG}_PET_{subject_name}.nii"
-        elif modality_tag == 'CT':
-            output_image_basename = f"{modality_tag}_{subject_name}.nii"
-        dcm2niix(input_path, output_image_basename)
+        dcm2niix_conversion(input_path)
         return
     elif os.path.isfile(input_path):
         if input_path.endswith('.nii.gz') or input_path.endswith('.nii'):
@@ -100,12 +94,79 @@ def standardize_to_nifti(parent_dir: str):
             progress.update(task, advance=1, description=f"[white] Processing {subject}...")
 
 
-def dcm2niix(input_path: str, output_image_basename: str) -> None:
+def dcm2niix_conversion(input_path: str) -> None:
     """
     Converts DICOM images into Nifti images using dcm2niix
     :param input_path: Path to the folder with the dicom files to convert
     """
-    output_dir = os.path.dirname(input_path)
-    output_file = os.path.join(output_dir, output_image_basename)
+    output_dir = Path(input_path).parent  # One level up from the DICOM directory
 
-    dicom2nifti.dicom_series_to_nifti(input_path, output_file, reorient_nifti=True)
+    # Run dcm2niix
+    dcm2niix.main([
+        '-o', str(output_dir),  # Output directory
+        input_path  # Input DICOM directory
+    ])
+    identify_and_cleanup(output_dir)
+
+
+def identify_scan_type(json_file):
+    # Load the JSON data
+    with open(json_file) as f:
+        json_data = json.load(f)
+
+    # Check the modality
+    modality = json_data.get("Modality")
+    if modality == "PT":
+        return "PT"
+    elif modality == "CT":
+        # Get the corresponding NIfTI file
+        nifti_file = json_file.with_suffix('.nii')
+
+        # Check for "Topogram" in "ImageType"
+        if "Topogram" in json_data.get("ImageType", "") and nifti_file.is_file():
+            # Get the directory containing the JSON file
+            directory = json_file.parent
+
+            # Get all other CT NIfTI files in the directory
+            ct_files = [f for f in directory.glob('*.nii') if
+                        f != nifti_file and identify_scan_type(f.with_suffix('.json')) == "CT"]
+
+            # If the NIfTI file is smaller than all other CT files, it's a topogram
+            if all(nifti_file.stat().st_size < other_file.stat().st_size for other_file in ct_files):
+                return "Topogram"
+
+        # If it's not a topogram, it's an original CT
+        return "Original CT"
+    else:
+        return "Unknown"
+
+
+def identify_and_cleanup(directory):
+    # Iterate over all JSON files in the directory
+    for json_file in Path(directory).glob('*.json'):
+        # Identify the scan type
+        scan_type = identify_scan_type(json_file)
+
+        # Get the corresponding NIfTI file
+        nifti_file = json_file.with_suffix('.nii')
+
+        if scan_type == "PT":
+            # Load the JSON data
+            with open(json_file) as f:
+                json_data = json.load(f)
+            # Check the radiotracer name
+            radiotracer = json_data.get("Radiopharmaceutical")
+            if radiotracer == "Fluorodeoxyglucose":
+                # Rename the NIfTI file
+                nifti_file.rename(nifti_file.with_stem(f'FDG_PET_{nifti_file.stem}'))
+            else:
+                # Rename the NIfTI file
+                nifti_file.rename(nifti_file.with_stem(f'PET_{nifti_file.stem}'))
+        elif scan_type == "Original CT":
+            # Rename the NIfTI file
+            nifti_file.rename(nifti_file.with_stem(f'CT_{nifti_file.stem}'))
+        else:
+            # Delete the NIfTI file and the JSON file
+            if nifti_file.is_file():
+                nifti_file.unlink()
+            json_file.unlink()
