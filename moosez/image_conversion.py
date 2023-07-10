@@ -18,7 +18,9 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 import os
-import sys
+import unicodedata
+import re
+import traceback
 import SimpleITK
 import pydicom
 from rich.progress import Progress
@@ -100,12 +102,64 @@ def standardize_to_nifti(parent_dir: str):
             progress.update(task, advance=1, description=f"[white] Processing {subject}...")
 
 
+def _remove_accents(unicode_filename: str):
+    """
+    Function that will try to remove accents from a unicode string to be used in a filename.
+    input filename should be either an ascii or unicode string
+    """
+    # noinspection PyBroadException
+    try:
+        unicode_filename = unicode_filename.replace(" ", "_")
+        cleaned_filename = unicodedata.normalize('NFKD', unicode_filename).encode('ASCII', 'ignore').decode('ASCII')
+
+        cleaned_filename = re.sub(r'[^\w\s-]', '', cleaned_filename.strip().lower())
+        cleaned_filename = re.sub(r'[-\s]+', '-', cleaned_filename)
+
+        return cleaned_filename
+    except:
+        traceback.print_exc()
+        return unicode_filename
+
+
+def rename_moose_compliant(dicom_directory: str, output_directory: str):
+    scouted_series = []
+    for file in os.listdir(dicom_directory):
+        if file.endswith("nii") or file.endswith(".nii.gz") or file.startswith("."):
+            continue
+
+        file_path = os.path.join(dicom_directory, file)
+        dicom = pydicom.dcmread(file_path, force=True)
+        if dicom.SeriesNumber in scouted_series:
+            continue
+
+        scouted_series.append(dicom.SeriesNumber)
+
+        if 'Modality' in dicom:
+            modality = str(dicom.Modality) + '_'
+
+        if 'SeriesNumber' in dicom:
+            base_filename = _remove_accents('%s' % dicom.SeriesNumber)
+            if 'SeriesDescription' in dicom:
+                base_filename = _remove_accents('%s_%s' % (base_filename, dicom.SeriesDescription))
+            elif 'SequenceName' in dicom:
+                base_filename = _remove_accents('%s_%s' % (base_filename, dicom.SequenceName))
+            elif 'ProtocolName' in dicom:
+                base_filename = _remove_accents('%s_%s' % (base_filename, dicom.ProtocolName))
+        else:
+            base_filename = _remove_accents(dicom.SeriesInstanceUID)
+
+        moose_compliant_filename = modality + base_filename
+
+        os.rename(os.path.join(output_directory, f"{base_filename}.nii"),
+                  os.path.join(output_directory, f"{moose_compliant_filename}.nii"))
+
+
 def dcm2niix(input_path: str, output_image_basename: str) -> None:
     """
     Converts DICOM images into Nifti images using dcm2niix
     :param input_path: Path to the folder with the dicom files to convert
     """
     output_dir = os.path.dirname(input_path)
-    output_file = os.path.join(output_dir, output_image_basename)
 
-    dicom2nifti.dicom_series_to_nifti(input_path, output_file, reorient_nifti=True)
+    dicom2nifti.convert_directory(input_path, output_dir, reorient=True)
+    rename_moose_compliant(input_path, output_dir)
