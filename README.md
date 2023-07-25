@@ -98,7 +98,7 @@ Here `<path_to_image_dir>` refers to the directory containing your subject image
 For instance, to perform clinical CT organ segmentation, the command would be:
 
 ```bash
-moosez -d <path_to_image_dir> -m clin_ct_organs
+moosez -d <path_to_image_dir> -m clin_ct_organs_v2 
 ```
 
 In this example, 'clin_ct_organs' is the segmentation model name for clinical CT organ segmentation.
@@ -133,7 +133,7 @@ Then, call the `moose` function to run predictions. The `moose` function takes f
 Here's an example of how to call the `moose` function:
 
  ```python
- model_name = 'clin_ct_organs'
+ model_name = 'clin_ct_organs_v2'
  input_dir = '/home/Documents/your_project/data/input'
  output_dir = '/home/Documents/your_project/data/output'
  accelerator = 'cuda'
@@ -188,11 +188,11 @@ For instance, if you have chosen the `model_name` as `clin_ct_organs`, the CT sc
 
 **Remember:** Adhering to these file naming and directory structure conventions ensures smooth and efficient processing with MOOSE 2.0. Happy segmenting! 🚀
 
-## :tada: Add and contribute Your Own nnUNetv2 Models to MooseZ :rocket:
+## :tada: Add and contribute Your Own nnUNetv1 as well as nnUNetv2 Models to MooseZ :rocket:
 
-Want to power-up your medical image segmentation tasks? :zap: Join the MooseZ community and contribute your own `nnUNetv2` models! :medal:
+Want to power-up your medical image segmentation tasks? :zap: Join the MooseZ community and contribute your own `nnUNetv2` models! 🥇
 
-By adding your custom models to MooseZ, you can enjoy:
+By adding your custom nnunet (both v1 and v2) models to MooseZ, you can enjoy:
 
 - :fast_forward: **Increased Speed** - MooseZ is optimized for fast performance. Use it to get your results faster!
 - :floppy_disk: **Reduced Memory** - MooseZ is designed to be efficient and lean, so it uses less memory!
@@ -203,11 +203,11 @@ So why wait? Make your models fly with MooseZ :airplane:
 
 1. **Prepare Your Model** :file_folder:
 
-    Train your model using `nnUNetv2` and get it ready for the big leagues!
+    Train your model either using `nnUNetv1`/`nnUNetv2` and get it ready for the big leagues!
 
 2. **Update AVAILABLE_MODELS List** :pencil2:
 
-    Include your model's unique identifier to the `AVAILABLE_MODELS` list in the [resources.py](https://github.com/LalithShiyam/MOOSE/blob/d131a7c88b3d0defd43339c7d788f092a242f59d/moosez/resources.py#L29) file. The model name should follow a specific syntax: 'clin' or 'preclin' (indicating Clinical or Preclinical), modality tag (like 'ct', 'pt', 'mr'), and then the tissue of interest.
+    Include your model's unique identifier to the `AVAILABLE_MODELS` list in the [resources.py](https://github.com/LalithShiyam/MOOSE/blob/d131a7c88b3d0defd43339c7d788f092a242f59d/moosez/resources.py#L29) file. The model name should follow a specific syntax: 'clin' or 'preclin' (indicating Clinical or Preclinical), modality tag (like 'ct', 'pt', 'mr'), the tissue of interest (e.g. brain, liver) and finally the version of nnunet you used to train (`v1` or `v2`). You theoretically don't need to stick to it, we just like it this way 😁!
 
 3. **Update MODELS Dictionary** :clipboard:
 
@@ -220,6 +220,10 @@ So why wait? Make your models fly with MooseZ :airplane:
 5. **Update map_model_name_to_task_number Function** :world_map:
 
     Modify the `map_model_name_to_task_number` function in the [resources.py](https://github.com/LalithShiyam/MOOSE/blob/d131a7c88b3d0defd43339c7d788f092a242f59d/moosez/resources.py#L130) file to return the task number associated with your model.
+
+6. **Update ORGAN_INDICES dictionary** 🧠
+
+   Append the `ORGAN_INDICES` dictionary in the [constants.py](https://github.com/LalithShiyam/MOOSE/blob/96c332860d8030c5c2d80d51ab4c57707b90e887/moosez/constants.py#L66) by including the intensity to region information  for your particular model. This is particularly useful if you want to extract stats from PET images using your CT masks.
 
 That's it! You've successfully contributed your own model to the MooseZ community! :confetti_ball:
 
