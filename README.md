@@ -190,7 +190,7 @@ For instance, if you have chosen the `model_name` as `clin_ct_organs`, the CT sc
 
 ## :tada: Add and contribute Your Own nnUNetv1 as well as nnUNetv2 Models to MooseZ :rocket:
 
-Want to power-up your medical image segmentation tasks? :zap: Join the MooseZ community and contribute your own `nnUNetv2` models! :medal:
+Want to power-up your medical image segmentation tasks? :zap: Join the MooseZ community and contribute your own `nnUNetv2` models! 🥇
 
 By adding your custom nnunet (both v1 and v2) models to MooseZ, you can enjoy:
 
