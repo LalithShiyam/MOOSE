@@ -43,21 +43,32 @@ def predict(model_name: str, input_dir: str, output_dir: str, accelerator: str):
     :param accelerator: The accelerator to use.
     :return: None
     """
+    # get nnunet version number
+    nnunet_version = MODELS[model_name]["nnunet_version"]
     task_number = map_model_name_to_task_number(model_name)
-    # set the environment variables
-    os.environ["nnUNet_results"] = constants.NNUNET_RESULTS_FOLDER
 
     # Preprocess the image
     temp_input_dir, resampled_image, moose_image_object = preprocess(input_dir, model_name)
     resampled_image_shape = resampled_image.shape
     resampled_image_affine = resampled_image.affine
 
-    # choose the appropriate trainer for the model
-    trainer = MODELS[model_name]["trainer"]
-
-    # Construct the command
-    command = f'nnUNetv2_predict -i {temp_input_dir} -o {output_dir} -d {task_number} -c 3d_fullres' \
-              f' -f all -tr {trainer} --disable_tta -device {accelerator}'
+    command = []
+    # set the parameters for nnunet_predict based on the nnunet version
+    if nnunet_version == "v1":
+        os.environ["RESULTS_FOLDER"] = constants.NNUNETV2_MODEL_FOLDER
+        # choose the appropriate model_type for the task
+        model_type = MODELS[model_name]["model_type"]
+        folds = MODELS[model_name]["fold"]
+        # Construct the command
+        command = f'nnUNet_predict -i {temp_input_dir} -o {output_dir} -t {task_number} -m {model_type} --fold {folds}' \
+                  f' --disable_tta'
+    elif nnunet_version == "v2":
+        os.environ["nnUNet_results"] = constants.NNUNETV2_MODEL_FOLDER
+        #  choose the appropriate trainer for the model
+        trainer = MODELS[model_name]["trainer"]
+        # Construct the command
+        command = f'nnUNetv2_predict -i {temp_input_dir} -o {output_dir} -d {task_number} -c 3d_fullres' \
+                  f' -f all -tr {trainer} --disable_tta -device {accelerator}'
 
     # Run the command
     subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, env=os.environ)

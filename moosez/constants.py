@@ -22,8 +22,8 @@ from moosez import file_utilities
 
 project_root = file_utilities.get_virtual_env_root()
 
-NNUNET_RESULTS_FOLDER = os.path.join(project_root, 'models', 'nnunet_trained_models')
-MOOSEZ_MODEL_FOLDER = os.path.join(NNUNET_RESULTS_FOLDER, 'nnUNet', '3d_fullres')
+NNUNETV2_MODEL_FOLDER = os.path.join(project_root, 'models', 'nnunet_trained_models')
+NNUNETV1_MODEL_FOLDER = os.path.join(NNUNETV2_MODEL_FOLDER, 'nnUNet', '3d_fullres')
 ALLOWED_MODALITIES = ['CT', 'PT', 'MR']
 TEMP_FOLDER = 'temp'
 
@@ -95,7 +95,48 @@ ORGAN_INDICES = {
     },
     "clin_pt_fdg_tumor": {
         1: "tumor"
-    }
+    },
+    "clin_ct_organs_v1": {
+        1: 'Adrenal-glands',
+        2: 'Aorta',
+        3: 'Bladder',
+        4: 'Brain',
+        5: 'Heart',
+        6: 'Kidneys',
+        7: 'Liver',
+        8: 'Pancreas',
+        9: 'Spleen',
+        10: 'Thyroid',
+        11: 'Inferior-vena-cava',
+        12: 'Lung'
+    },
+    "clin_ct_bones_v1": {
+        1: 'Carpal',
+        2: 'Clavicle',
+        3: 'Femur',
+        4: 'Fibula',
+        5: 'Humerus',
+        6: 'Metacarpal',
+        7: 'Metatarsal',
+        8: 'Patella',
+        9: 'Pelvis',
+        10: 'Phalanges-of-the-hand',
+        11: 'Radius',
+        12: 'Ribcage',
+        13: 'Scapula',
+        14: 'Skull',
+        15: 'Spine',
+        16: 'Sternum',
+        17: 'Tarsal',
+        18: 'Tibia',
+        19: 'Phalanges-of-the-feet',
+        20: 'Ulna'
+    },
+    "clin_ct_fat_muscles_v1": {
+        1: 'Skeletal-muscle',
+        2: 'Subcutaneous-fat',
+        3: 'Torso-fat'
+    },
     # More index-to-name dictionaries for other models...
 }
 

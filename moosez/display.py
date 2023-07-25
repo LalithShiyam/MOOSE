@@ -72,7 +72,8 @@ def expectations(model_name: str) -> list:
     print(
         f" Imaging: {model_info['Imaging']} |"
         f" Modality: {modality} | "
-        f"Tissue of interest: {model_info['Tissue of interest']}")
+        f"Tissue of interest: {model_info['Tissue of interest']} | "
+        f"nnUNet version: {model_info['nnUNet version']} ")
     print(
         f" Required modalities: {modalities} | "
         f" No. of modalities: {len(modalities)}"

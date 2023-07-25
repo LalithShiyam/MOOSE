@@ -30,7 +30,10 @@ AVAILABLE_MODELS = ["clin_ct_lungs",
                     "clin_ct_organs",
                     "clin_pt_fdg_tumor",
                     "clin_ct_body",
-                    "preclin_mr_all"]
+                    "preclin_mr_all",
+                    "clin_ct_organs_v1",
+                    "clin_ct_bones_v1",
+                    "clin_ct_fat_muscles_v1"]
 
 # This dictionary holds the pre-trained models available in MooseZ library.
 # Each key is a unique model identifier following a specific syntax mentioned above
@@ -48,45 +51,94 @@ AVAILABLE_MODELS = ["clin_ct_lungs",
 
 MODELS = {
     "clin_ct_lungs": {
+        "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/clin_ct_lungs_24062023.zip",
         "filename": "Dataset333_HMS3dlungs.zip",
         "directory": "Dataset333_HMS3dlungs",
         "trainer": "nnUNetTrainer_2000epochs_NoMirroring",
         "voxel_spacing": [1.5, 1.5, 1.5],
-        "multilabel_prefix": "CT_Lungs_"
+        "multilabel_prefix": "CT_Lungs_",
+        "model_type": None,
+        "fold": None,
     },
     "clin_ct_organs": {
+        "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/MOOSEv2_bspline_organs23062023.zip",
         "filename": "Dataset123_Organs.zip",
         "directory": "Dataset123_Organs",
         "trainer": "nnUNetTrainer_2000epochs_NoMirroring",
         "voxel_spacing": [1.5, 1.5, 1.5],
-        "multilabel_prefix": "CT_Organs_"
+        "multilabel_prefix": "CT_Organs_",
+        "model_type": None,
+        "fold": None,
     },
     "clin_pt_fdg_tumor": {
+        "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/Dataset789_Tumors.zip",
         "filename": "Dataset789_Tumors.zip",
         "directory": "Dataset789_Tumors",
         "trainer": "nnUNetTrainerDA5",
         "voxel_spacing": [1.5, 1.5, 1.5],
-        "multilabel_prefix": "PT_FDG_Tumor_"
+        "multilabel_prefix": "PT_FDG_Tumor_",
+        "model_type": None,
+        "fold": None,
     },
     "preclin_mr_all": {
+        "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/preclin_mr_14062023.zip",
         "filename": "Dataset234_Preclin.zip",
         "directory": "Dataset234_Preclin",
         "trainer": "nnUNetTrainerNoMirroring",
         "voxel_spacing": [0.15, 0.15, 0.15],
-        "multilabel_prefix": "Preclin_MR_all_"
+        "multilabel_prefix": "Preclin_MR_all_",
+        "model_type": None,
+        "fold": None,
     },
     "clin_ct_body": {
+        "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/Dataset696_BodyContour.zip",
         "filename": "Dataset696_BodyContour.zip",
         "directory": "Dataset696_BodyContour",
         "trainer": "nnUNetTrainer",
         "voxel_spacing": [1.5, 1.5, 1.5],
-        "multilabel_prefix": "CT_Body_"
+        "multilabel_prefix": "CT_Body_",
+        "model_type": None,
+        "fold": None,
     },
+    "clin_ct_organs_v1": {
+        "nnunet_version": "v1",
+        "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/Task123_StOrgans40.zip",
+        "filename": "Task123_StOrgans40.zip",
+        "directory": "Task123_StOrgans40",
+        "trainer": None,
+        "voxel_spacing": [0.9765625, 0.9765625, 2.3440001],
+        "multilabel_prefix": "CT_Organs_V1_",
+        "model_type": "3d_fullres",
+        "fold": "all",
+    },
+    "clin_ct_bones_v1": {
+        "nnunet_version": "v1",
+        "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/Task517_Bones40.zip",
+        "filename": "Task517_Bones40.zip",
+        "directory": "Task517_Bones40",
+        "trainer": None,
+        "voxel_spacing": [0.9765625, 0.9765625, 2.3440001],
+        "multilabel_prefix": "CT_Bones_V1_",
+        "model_type": "3d_fullres",
+        "fold": "all",
+    },
+    "clin_ct_fat_muscles_v1": {
+        "nnunet_version": "v1",
+        "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/Task517_Bones40.zip",
+        "filename": "Task427_FM40.zip",
+        "directory": "Task427_FM40",
+        "trainer": None,
+        "voxel_spacing": [0.9765625, 0.9765625, 2.3440001],
+        "multilabel_prefix": "CT_Fat_Muscles_V1_",
+        "model_type": "3d_fullres",
+        "fold": "all",
+    },
+
 }
 
 
@@ -104,11 +156,22 @@ def expected_modality(model_name: str) -> dict:
     :return: The expected modality for the model.
     """
     models = {
-        "clin_ct_lungs": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Lungs"},
-        "clin_ct_organs": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Organs"},
-        "clin_pt_fdg_tumor": {"Imaging": "Clinical", "Modality": "PET", "Tissue of interest": "Tumor"},
-        "clin_ct_body": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Body"},
-        "preclin_mr_all": {"Imaging": "Pre-clinical", "Modality": "MR", "Tissue of interest": "All regions"},
+        "clin_ct_lungs": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Lungs",
+                          "nnUNet version": "v2"},
+        "clin_ct_organs": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Organs",
+                           "nnUNet version": "v2"},
+        "clin_pt_fdg_tumor": {"Imaging": "Clinical", "Modality": "PET", "Tissue of interest": "Tumor",
+                              "nnUNet version": "v2"},
+        "clin_ct_body": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Body",
+                         "nnUNet version": "v2"},
+        "preclin_mr_all": {"Imaging": "Pre-clinical", "Modality": "MR", "Tissue of interest": "All regions",
+                           "nnUNet version": "v2"},
+        "clin_ct_organs_v1": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Organs",
+                                "nnUNet version": "v1"},
+        "clin_ct_bones_v1": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Bones",
+                                "nnUNet version": "v1"},
+        "clin_ct_fat_muscles_v1": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Fat and Muscles",
+                                "nnUNet version": "v1"},
     }
 
     if model_name in models:
@@ -143,6 +206,12 @@ def map_model_name_to_task_number(model_name: str):
         return 234
     elif model_name == "clin_ct_body":
         return 696
+    elif model_name == "clin_ct_organs_v1":
+        return 123
+    elif model_name == "clin_ct_bones_v1":
+        return 517
+    elif model_name == "clin_ct_fat_muscles_v1":
+        return 427
     else:
         raise Exception(f"Error: The model name '{model_name}' is not valid.")
 

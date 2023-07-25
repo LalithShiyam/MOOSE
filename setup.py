@@ -31,6 +31,7 @@ setup(
              ' preclinical-segmentation clinical-segmentation',
     packages=find_packages(),
     install_requires=[
+        'nnunet',
         'nnunetv2',
         'nibabel~=3.2.2',
         'halo~=0.0.31',

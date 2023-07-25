@@ -88,7 +88,13 @@ def main():
     print('')
     print(f'{constants.ANSI_VIOLET} {emoji.emojize(":globe_with_meridians:")} MODEL DOWNLOAD:{constants.ANSI_RESET}')
     print('')
-    model_path = constants.NNUNET_RESULTS_FOLDER
+    nnunet_version = MODELS[model_name]["nnunet_version"]
+    # if nnunet_version is v1, the model path = NNUNETV1_MODEL_FOLDER
+    # if nnunet_version is v2, the model_path = nnunet_results_folder
+    if nnunet_version == "v1":
+        model_path = constants.NNUNETV1_MODEL_FOLDER
+    elif nnunet_version == "v2":
+        model_path = constants.NNUNETV2_MODEL_FOLDER
     file_utilities.create_directory(model_path)
     download.model(model_name, model_path)
 
@@ -198,7 +204,7 @@ def main():
 
 
 def moose(model_name: str, input_dir: str, output_dir: str, accelerator: str):
-    model_path = constants.NNUNET_RESULTS_FOLDER
+    model_path = constants.NNUNETV2_MODEL_FOLDER
     file_utilities.create_directory(model_path)
     download.model(model_name, model_path)
     input_validation.make_nnunet_compatible(input_dir)
