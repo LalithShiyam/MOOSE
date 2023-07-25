@@ -108,7 +108,8 @@ ORGAN_INDICES = {
         9: 'Spleen',
         10: 'Thyroid',
         11: 'Inferior-vena-cava',
-        12: 'Lung'
+        12: 'Skeleton',
+        13: 'Lung'
     },
     "clin_ct_bones_v1": {
         1: 'Carpal',
