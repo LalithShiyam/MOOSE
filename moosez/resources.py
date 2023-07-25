@@ -50,7 +50,7 @@ AVAILABLE_MODELS = ["clin_ct_lungs_v2",
 # To include your own model, add a new entry to this dictionary following the above format.
 
 MODELS = {
-    "clin_ct_lungs": {
+    "clin_ct_lungs_v2": {
         "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/clin_ct_lungs_24062023.zip",
         "filename": "Dataset333_HMS3dlungs.zip",
@@ -61,7 +61,7 @@ MODELS = {
         "model_type": None,
         "fold": None,
     },
-    "clin_ct_organs": {
+    "clin_ct_organs_v2": {
         "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/MOOSEv2_bspline_organs23062023.zip",
         "filename": "Dataset123_Organs.zip",
@@ -72,7 +72,7 @@ MODELS = {
         "model_type": None,
         "fold": None,
     },
-    "clin_pt_fdg_tumor": {
+    "clin_pt_fdg_tumor_v2": {
         "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/Dataset789_Tumors.zip",
         "filename": "Dataset789_Tumors.zip",
@@ -83,7 +83,7 @@ MODELS = {
         "model_type": None,
         "fold": None,
     },
-    "preclin_mr_all": {
+    "preclin_mr_all_v2": {
         "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/preclin_mr_14062023.zip",
         "filename": "Dataset234_Preclin.zip",
@@ -94,7 +94,7 @@ MODELS = {
         "model_type": None,
         "fold": None,
     },
-    "clin_ct_body": {
+    "clin_ct_body_v2": {
         "nnunet_version": "v2",
         "url": "https://moose-files.s3.eu-de.cloud-object-storage.appdomain.cloud/Dataset696_BodyContour.zip",
         "filename": "Dataset696_BodyContour.zip",
