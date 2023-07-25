@@ -53,6 +53,7 @@ def predict(model_name: str, input_dir: str, output_dir: str, accelerator: str):
     resampled_image_affine = resampled_image.affine
 
     command = []
+
     # set the parameters for nnunet_predict based on the nnunet version
     if nnunet_version == "v1":
         os.environ["RESULTS_FOLDER"] = constants.NNUNETV2_MODEL_FOLDER

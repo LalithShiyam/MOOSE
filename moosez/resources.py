@@ -26,11 +26,11 @@ from moosez import constants
 # 'clin' or 'preclin' (indicating Clinical or Preclinical),
 # modality tag (like 'ct', 'pt', 'mr'), and then the tissue of interest.
 
-AVAILABLE_MODELS = ["clin_ct_lungs",
-                    "clin_ct_organs",
-                    "clin_pt_fdg_tumor",
-                    "clin_ct_body",
-                    "preclin_mr_all",
+AVAILABLE_MODELS = ["clin_ct_lungs_v2",
+                    "clin_ct_organs_v2",
+                    "clin_pt_fdg_tumor_v2",
+                    "clin_ct_body_v2",
+                    "preclin_mr_all_v2",
                     "clin_ct_organs_v1",
                     "clin_ct_bones_v1",
                     "clin_ct_fat_muscles_v1"]
@@ -156,22 +156,22 @@ def expected_modality(model_name: str) -> dict:
     :return: The expected modality for the model.
     """
     models = {
-        "clin_ct_lungs": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Lungs",
+        "clin_ct_lungs_v2": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Lungs",
                           "nnUNet version": "v2"},
-        "clin_ct_organs": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Organs",
+        "clin_ct_organs_v2": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Organs",
                            "nnUNet version": "v2"},
-        "clin_pt_fdg_tumor": {"Imaging": "Clinical", "Modality": "PET", "Tissue of interest": "Tumor",
+        "clin_pt_fdg_tumor_v2": {"Imaging": "Clinical", "Modality": "PET", "Tissue of interest": "Tumor",
                               "nnUNet version": "v2"},
-        "clin_ct_body": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Body",
+        "clin_ct_body_v2": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Body",
                          "nnUNet version": "v2"},
-        "preclin_mr_all": {"Imaging": "Pre-clinical", "Modality": "MR", "Tissue of interest": "All regions",
+        "preclin_mr_all_v2": {"Imaging": "Pre-clinical", "Modality": "MR", "Tissue of interest": "All regions",
                            "nnUNet version": "v2"},
         "clin_ct_organs_v1": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Organs",
-                                "nnUNet version": "v1"},
+                              "nnUNet version": "v1"},
         "clin_ct_bones_v1": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Bones",
-                                "nnUNet version": "v1"},
+                             "nnUNet version": "v1"},
         "clin_ct_fat_muscles_v1": {"Imaging": "Clinical", "Modality": "CT", "Tissue of interest": "Fat and Muscles",
-                                "nnUNet version": "v1"},
+                                   "nnUNet version": "v1"},
     }
 
     if model_name in models:
@@ -196,15 +196,15 @@ def map_model_name_to_task_number(model_name: str):
     :param model_name: The name of the model.
     :return: The task number.
     """
-    if model_name == "clin_ct_lungs":
+    if model_name == "clin_ct_lungs_v2":
         return 333
-    elif model_name == "clin_ct_organs":
+    elif model_name == "clin_ct_organs_v2":
         return 123
-    elif model_name == "clin_pt_fdg_tumor":
+    elif model_name == "clin_pt_fdg_tumor_v2":
         return 789
-    elif model_name == "preclin_mr_all":
+    elif model_name == "preclin_mr_all_v2":
         return 234
-    elif model_name == "clin_ct_body":
+    elif model_name == "clin_ct_body_v2":
         return 696
     elif model_name == "clin_ct_organs_v1":
         return 123

@@ -64,7 +64,7 @@ CHUNK_PREFIX = 'chunk'
 # ORGAN INDICES
 
 ORGAN_INDICES = {
-    "clin_ct_organs": {
+    "clin_ct_organs_v2": {
         1: "spleen",
         2: "kidney_right",
         3: "kidney_left",
@@ -83,17 +83,17 @@ ORGAN_INDICES = {
         16: "lung_middle_lobe_right",
         17: "lung_lower_lobe_right"
     },
-    "clin_ct_lungs": {
+    "clin_ct_lungs_v2": {
         1: "lung_upper_lobe_left",
         2: "lung_lower_lobe_left",
         3: "lung_upper_lobe_right",
         4: "lung_middle_lobe_right",
         5: "lung_lower_lobe_right"
     },
-    "clin_ct_body": {
+    "clin_ct_body_v2": {
         1: "whole-body"
     },
-    "clin_pt_fdg_tumor": {
+    "clin_pt_fdg_tumor_v2": {
         1: "tumor"
     },
     "clin_ct_organs_v1": {
