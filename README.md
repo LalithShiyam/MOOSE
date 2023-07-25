@@ -98,7 +98,7 @@ Here `<path_to_image_dir>` refers to the directory containing your subject image
 For instance, to perform clinical CT organ segmentation, the command would be:
 
 ```bash
-moosez -d <path_to_image_dir> -m clin_ct_organs
+moosez -d <path_to_image_dir> -m clin_ct_organs_v2 
 ```
 
 In this example, 'clin_ct_organs' is the segmentation model name for clinical CT organ segmentation.
@@ -133,7 +133,7 @@ Then, call the `moose` function to run predictions. The `moose` function takes f
 Here's an example of how to call the `moose` function:
 
  ```python
- model_name = 'clin_ct_organs'
+ model_name = 'clin_ct_organs_v2'
  input_dir = '/home/Documents/your_project/data/input'
  output_dir = '/home/Documents/your_project/data/output'
  accelerator = 'cuda'
