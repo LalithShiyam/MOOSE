@@ -19,6 +19,7 @@
 
 import contextlib
 import io
+import logging
 import os
 import re
 import unicodedata
@@ -34,6 +35,7 @@ import pydicom
 from rich.progress import Progress
 from moosez import constants
 from moosez import nifti2dicom
+from moosez import file_utilities
 
 
 def read_dicom_folder(folder_path: str) -> SimpleITK.Image:
@@ -286,12 +288,31 @@ def sorted_dicom_series(dicom_path: str):
     return sorted_dcms
 
 
+def get_first_n_files(sorted_dcms: List[str], n: int):
+    selected_files = []
+    for i, file_path in enumerate(sorted_dcms):
+        if os.path.isfile(file_path):
+            selected_files.append(file_path)
+            if len(selected_files) == n:
+                break
+
+    if len(selected_files) < n:
+        print(f"Only {len(selected_files)} file(s) found in the list.")
+    return selected_files
+
+
 def nifti2dicom_process(moose_compliant_subjects: List[str], dicom_output_dir: str):
     with Progress() as progress:
         task = progress.add_task("[white] Processing subjects...", total=len(moose_compliant_subjects))
         for subject_path in moose_compliant_subjects:
             if os.path.isdir(subject_path):
                 ct_dicom_dir = find_ct_dicom_folder(subject_path)
+                if ct_dicom_dir is None:
+                    print(f'No DICOM CT study found in the directory {subject_path}. Unable to proceed.')
+                    logging.info(f'No DICOM CT study found in the directory for subject '
+                                 f'{os.path.basename(subject_path)}. Unable to proceed.')
+                    continue
+
                 sorted_dcms = sorted_dicom_series(ct_dicom_dir)
 
                 segmentation_dir = find_segmentations_folders(subject_path)
@@ -306,12 +327,12 @@ def nifti2dicom_process(moose_compliant_subjects: List[str], dicom_output_dir: s
                     # Extract the labels dictionary from the JSON data
                     labels = label_data.get("labels", {})
 
-                    cropping_coordinates_dict = {}
                     temp_directory = tempfile.mkdtemp()
                     nifti_path = os.path.join(temp_directory, 'niftis')
                     if not os.path.exists(nifti_path):
                         os.mkdir(nifti_path)
                     # Split the segmentation and save each class label
+                    cropping_coordinates_dict = {}
                     for class_name, class_label in labels.items():
                         if class_name == 'background':
                             continue
@@ -341,22 +362,16 @@ def nifti2dicom_process(moose_compliant_subjects: List[str], dicom_output_dir: s
                         output_nifti_dir = os.path.join(nifti_path, f"{class_name}.nii.gz")
                         SimpleITK.WriteImage(cropped_segmentation, output_nifti_dir)
 
-                    # Initialize first_file with None or a default value
-                    dfile = None
-                    tffiles = []
-                    # Filter out directories (if any) and get the first two file
-                    for i, file_path in enumerate(sorted_dcms):
-                        if os.path.isfile(file_path):
-                            if dfile is None and i < 2:
-                                tffiles.append(file_path)
-                            else:
-                                break
+                    # Get n CT dcm seeds
+                    dicom_seeds = get_first_n_files(sorted_dcms, 2)
 
-                    if tffiles:
-                        nifti2dicom.convert_nifti_to_dicom_seg(nifti_path, tffiles, dicom_output_dir, cropping_coordinates_dict)
-                        shutil.rmtree(temp_directory)
-                    else:
-                        print("No files found in the directory. Unable to proceed.")
+                    dicom_folder = os.path.join(dicom_output_dir, constants.DICOM_SEGS_FOLDER)
+                    if not os.path.exists(dicom_folder):
+                        file_utilities.create_directory(dicom_folder)
+                    nifti2dicom.convert_nifti_to_dicom_seg(nifti_path, dicom_seeds, dicom_folder,
+                                                           cropping_coordinates_dict)
+                    shutil.rmtree(temp_directory)
+
             else:
                 continue
             progress.update(task, advance=1, description=f"[white] Processing {subject_path}...")
