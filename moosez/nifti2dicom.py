@@ -408,7 +408,6 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, croppin
     if len(nifti_list) > 1 and output_path.endswith(".dcm"):
         sys.exit("Incompatible args, multiple nifti inputs requires output to dir")
 
-
     temp_directory = tempfile.mkdtemp()
     for nifti in nifti_list:
         print(nifti)
