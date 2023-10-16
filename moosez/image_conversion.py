@@ -273,31 +273,13 @@ def find_ct_dicom_folder(root_directory):
     return None
 
 
-def custom_sort_key(file_path):
-    # custom sorting key function to sort based on ImagePositionPatient[2]
-    ds = pydicom.dcmread(file_path)
-    return float(ds.ImagePositionPatient[2])
+def is_label_present(segmentation, label_value):
+    class_label_image = SimpleITK.BinaryThreshold(segmentation, lowerThreshold=label_value, upperThreshold=label_value)
 
+    label_size_filter = SimpleITK.LabelShapeStatisticsImageFilter()
+    label_size_filter.Execute(class_label_image)
 
-def sorted_dicom_series(dicom_path: str):
-    dcm_files = [os.path.join(dicom_path, file) for file in os.listdir(dicom_path) if
-                 os.path.isfile(os.path.join(dicom_path, file))]
-    # Sorting the list of DICOM file paths using the custom sorting key
-    sorted_dcms = sorted(dcm_files, key=custom_sort_key)
-    return sorted_dcms
-
-
-def get_first_n_files(sorted_dcms: List[str], n: int):
-    selected_files = []
-    for i, file_path in enumerate(sorted_dcms):
-        if os.path.isfile(file_path):
-            selected_files.append(file_path)
-            if len(selected_files) == n:
-                break
-
-    if len(selected_files) < n:
-        print(f"Only {len(selected_files)} file(s) found in the list.")
-    return selected_files
+    return label_size_filter.GetNumberOfLabels() > 0
 
 
 def nifti2dicom_process(subject_path: str, **kwargs: Dict):
