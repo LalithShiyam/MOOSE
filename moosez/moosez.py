@@ -64,6 +64,16 @@ def main():
         metavar="<MAIN_DIRECTORY>",
         help="Specify the main directory containing subject folders."
     )
+
+    # DICOM Segmentations Output directory (optional)
+    parser.add_argument(
+        "-o", "--output_directory",
+        type=str,
+        required=False,
+        metavar="<OUTPUT_DIRECTORY>",
+        help="Specify the output directory to write the DICOM segmentations. If not provided, "
+             "it will be written according to each subject's directory."
+    )
     
     # Name of the model to use for segmentation
     model_help_text = "Choose the model for segmentation from the following:\n" + "\n".join(AVAILABLE_MODELS)
@@ -75,7 +85,14 @@ def main():
         metavar="<MODEL_NAME>",
         help=model_help_text
     )
-    
+
+    # Optional flag used to trigger segmentations' bounding box cropping
+    parser.add_argument(
+        "-o", "--cropping_flag",
+        action="store_true",
+        help="Optional flag used to trigger segmentations' bounding box cropping."
+    )
+
     # Custom help option
     parser.add_argument(
         "-h", "--help",
@@ -88,6 +105,7 @@ def main():
     args = parser.parse_args()
 
     parent_folder = os.path.abspath(args.main_directory)
+    dicom_segmentations = os.path.abspath(args.output_directory)
     model_name = args.model_name
 
     display.logo()
@@ -208,6 +226,23 @@ def main():
         time.sleep(3)
         logging.info(
             f' {constants.ANSI_GREEN}[{i + 1}/{num_subjects}] Prediction done for {os.path.basename(subject)} using {model_name}!' f' | Elapsed time: {round(elapsed_time / 60, 1)} min{constants.ANSI_RESET}')
+
+        # Performing nifti2dicom conversion on the nifti predictions
+        print('')
+        # print(f'{constants.ANSI_VIOLET} {emoji.emojize(":crystal_ball:")} PREDICT:{constants.ANSI_RESET}')
+        print('')
+        logging.info(' ')
+        logging.info(' PERFORMING NIFTI to DICOM Conversion on Predicted Segmentations:')
+        logging.info(' ')
+        if dicom_segmentations:
+            print(f'{constants.ANSI_VIOLET} Output Directory for Writing DICOM Segmentations Specified:'
+                  f'\n DICOM Segmentations will be Written to: {dicom_segmentations}{constants.ANSI_RESET}')
+            logging.info(' ')
+            logging.info(f' Output Directory for Writing DICOM Segmentations Specified: {dicom_segmentations}')
+            logging.info(' ')
+            image_conversion.nifti2dicom_process(moose_compliant_subjects, dicom_segmentations)
+        else:
+            image_conversion.nifti2dicom_process(moose_compliant_subjects, moose_dir)
         # ----------------------------------
         # EXTRACT PET ACTIVITY
         # ----------------------------------
