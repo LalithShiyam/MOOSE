@@ -70,6 +70,7 @@ def main():
         "-o", "--output_directory",
         type=str,
         required=False,
+        default=None,
         metavar="<OUTPUT_DIRECTORY>",
         help="Specify the output directory to write the DICOM segmentations. If not provided, "
              "it will be written according to each subject's directory."
@@ -86,12 +87,12 @@ def main():
         help=model_help_text
     )
 
-    # Optional flag used to trigger segmentations' bounding box cropping
-    parser.add_argument(
-        "-o", "--cropping_flag",
-        action="store_true",
-        help="Optional flag used to trigger segmentations' bounding box cropping."
-    )
+    # # Optional flag used to trigger segmentations' bounding box cropping
+    # parser.add_argument(
+    #     "-o", "--cropping_flag",
+    #     action="store_true",
+    #     help="Optional flag used to trigger segmentations' bounding box cropping."
+    # )
 
     # Custom help option
     parser.add_argument(
@@ -105,7 +106,6 @@ def main():
     args = parser.parse_args()
 
     parent_folder = os.path.abspath(args.main_directory)
-    dicom_segmentations = os.path.abspath(args.output_directory)
     model_name = args.model_name
 
     display.logo()
@@ -234,13 +234,13 @@ def main():
         logging.info(' ')
         logging.info(' PERFORMING NIFTI to DICOM Conversion on Predicted Segmentations:')
         logging.info(' ')
-        if dicom_segmentations:
+        if args.output_directory is not None:
             print(f'{constants.ANSI_VIOLET} Output Directory for Writing DICOM Segmentations Specified:'
-                  f'\n DICOM Segmentations will be Written to: {dicom_segmentations}{constants.ANSI_RESET}')
+                  f'\n DICOM Segmentations will be Written to: {args.output_directory}{constants.ANSI_RESET}')
             logging.info(' ')
-            logging.info(f' Output Directory for Writing DICOM Segmentations Specified: {dicom_segmentations}')
+            logging.info(f' Output Directory for Writing DICOM Segmentations Specified: {args.output_directory}')
             logging.info(' ')
-            image_conversion.nifti2dicom_process(moose_compliant_subjects, dicom_segmentations)
+            image_conversion.nifti2dicom_process(moose_compliant_subjects, args.output_directory)
         else:
             image_conversion.nifti2dicom_process(moose_compliant_subjects, moose_dir)
         # ----------------------------------
