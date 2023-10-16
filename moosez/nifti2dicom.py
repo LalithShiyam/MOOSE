@@ -358,14 +358,14 @@ def GetUuid():
     return machineID
 
 
-def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, crc):
+def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, crc):
     # Create DICOM conformant date and time
     pydicom.config.datetime_conversion = True
 
-    seed = pydicom.read_file(dicom_seed_path[0])
-    seed1 = pydicom.read_file(dicom_seed_path[1])
+    seed1 = pydicom.read_file(dicom_seeds_dir[0])
+    seed2 = pydicom.read_file(dicom_seeds_dir[1])
 
-    slice_thickness = round(seed1.ImagePositionPatient[2] - seed.ImagePositionPatient[2], 2)
+    slice_thickness = round(seed2.ImagePositionPatient[2] - seed1.ImagePositionPatient[2], 2)
 
     if os.path.isdir(nifti_path):
         nifti_list = [
@@ -377,8 +377,8 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, crc):
     else:
         sys.exit("No such file: " + nifti_path)
 
-    if not os.path.isfile(dicom_seed_path[0]):
-        sys.exit("No such file: " + dicom_seed_path[0])
+    if not os.path.isfile(dicom_seeds_dir[0]):
+        sys.exit("No such file: " + dicom_seeds_dir[0])
 
     if os.path.isdir(output_path):
         pass
@@ -398,27 +398,26 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, crc):
     if len(nifti_list) > 1 and output_path.endswith(".dcm"):
         sys.exit("Incompatible args, multiple nifti inputs requires output to dir")
 
-
     temp_directory = tempfile.mkdtemp()
     for nifti in nifti_list:
         print(nifti)
         class_name = os.path.basename(nifti).split('.')[0]
         min_x, min_y, min_z, size_x, size_y, size_z = crc[class_name]
-        seed.Columns = size_x
-        seed.Rows = size_y
+        seed1.Columns = size_x
+        seed1.Rows = size_y
 
-        new_x = seed.ImagePositionPatient[0] + (min_x * seed.PixelSpacing[0])
-        new_y = seed.ImagePositionPatient[1] + (min_y * seed.PixelSpacing[1])
-        if seed.SliceThickness is not None:
-            new_z = seed.ImagePositionPatient[2] + (min_z * seed.SliceThickness)
+        new_x = seed1.ImagePositionPatient[0] + (min_x * seed1.PixelSpacing[0])
+        new_y = seed1.ImagePositionPatient[1] + (min_y * seed1.PixelSpacing[1])
+        if seed1.SliceThickness is not None:
+            new_z = seed1.ImagePositionPatient[2] + (min_z * seed1.SliceThickness)
         else:
-            new_z = seed.ImagePositionPatient[2] + (min_z * slice_thickness)
+            new_z = seed1.ImagePositionPatient[2] + (min_z * slice_thickness)
 
-        seed.ImagePositionPatient = [f'{new_x:.3f}', f'{new_y:.3f}', f'{new_z:.3f}']
+        seed1.ImagePositionPatient = [f'{new_x:.3f}', f'{new_y:.3f}', f'{new_z:.3f}']
 
         img = nib.load(nifti)
 
-        ds = CreateSegmentation(img, seed)
+        ds = CreateSegmentation(img, seed1)
         ds.ensure_file_meta()
         ds.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 
@@ -430,5 +429,5 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, crc):
         ds.save_as(output_file, False)
 
     shutil.copytree(temp_directory, output_path, dirs_exist_ok=True)
-    # shutil.rmtree(temp_directory)
+    shutil.rmtree(temp_directory)
 
