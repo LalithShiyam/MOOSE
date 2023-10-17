@@ -358,7 +358,7 @@ def GetUuid():
     return machineID
 
 
-def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, crc):
+def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, **kwargs):
     # Create DICOM conformant date and time
     pydicom.config.datetime_conversion = True
 
@@ -401,19 +401,21 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, crc):
     temp_directory = tempfile.mkdtemp()
     for nifti in nifti_list:
         print(nifti)
-        class_name = os.path.basename(nifti).split('.')[0]
-        min_x, min_y, min_z, size_x, size_y, size_z = crc[class_name]
-        seed1.Columns = size_x
-        seed1.Rows = size_y
+        if kwargs.get('cropping_coordinates', False):
+            class_name = os.path.basename(nifti).split('.')[0]
+            crc = kwargs['cropping_coordinates']
+            min_x, min_y, min_z, size_x, size_y, size_z = crc[class_name]
+            seed1.Columns = size_x
+            seed1.Rows = size_y
 
-        new_x = seed1.ImagePositionPatient[0] + (min_x * seed1.PixelSpacing[0])
-        new_y = seed1.ImagePositionPatient[1] + (min_y * seed1.PixelSpacing[1])
-        if seed1.SliceThickness is not None:
-            new_z = seed1.ImagePositionPatient[2] + (min_z * seed1.SliceThickness)
-        else:
-            new_z = seed1.ImagePositionPatient[2] + (min_z * slice_thickness)
+            new_x = seed1.ImagePositionPatient[0] + (min_x * seed1.PixelSpacing[0])
+            new_y = seed1.ImagePositionPatient[1] + (min_y * seed1.PixelSpacing[1])
+            if seed1.SliceThickness is not None:
+                new_z = seed1.ImagePositionPatient[2] + (min_z * seed1.SliceThickness)
+            else:
+                new_z = seed1.ImagePositionPatient[2] + (min_z * slice_thickness)
 
-        seed1.ImagePositionPatient = [f'{new_x:.3f}', f'{new_y:.3f}', f'{new_z:.3f}']
+            seed1.ImagePositionPatient = [f'{new_x:.3f}', f'{new_y:.3f}', f'{new_z:.3f}']
 
         img = nib.load(nifti)
 
