@@ -233,11 +233,11 @@ def main():
         # Performing nifti2dicom conversion on the nifti predictions
         print('')
         print(
-            f'{constants.ANSI_VIOLET} {emoji.emojize(":crystal_ball:")} PERFORMING NIFTI to DICOM Conversion on the Predicted '
-            f'Segmentation:{constants.ANSI_RESET}')
+            f'{constants.ANSI_VIOLET} {emoji.emojize(":crystal_ball:")} Performing NIFTI to DICOM Conversion on the Predicted '
+            f'Segmentation{constants.ANSI_RESET}')
         print('')
         logging.info(' ')
-        logging.info(' PERFORMING NIFTI to DICOM Conversion on the Predicted Segmentation:')
+        logging.info(' Performing NIFTI to DICOM Conversion on the Predicted Segmentation')
         logging.info(' ')
         if image_conversion.find_ct_dicom_folder(subject) is None:
             print(f'No DICOM CT study found in the directory {subject}. Unable to proceed.')
@@ -246,7 +246,7 @@ def main():
         else:
             if args.output_directory is not None:
                 print(
-                    f'{constants.ANSI_VIOLET}{emoji.emojize(":crystal_ball:")} Output Directory for Writing DICOM Segmentations Specified:'
+                    f'{constants.ANSI_VIOLET}{emoji.emojize(":crystal_ball:")} Output Directory for Writing DICOM Segmentations Specified'
                     f'\n DICOM Segmentations will be Written to: {args.output_directory}{constants.ANSI_RESET}')
                 logging.info(' ')
                 logging.info(f' Output Directory for Writing DICOM Segmentations Specified: {args.output_directory}')

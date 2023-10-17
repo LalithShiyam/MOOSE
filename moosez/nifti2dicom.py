@@ -400,7 +400,6 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, **kwarg
 
     temp_directory = tempfile.mkdtemp()
     for nifti in nifti_list:
-        print(nifti)
         if kwargs.get('cropping_coordinates', False):
             class_name = os.path.basename(nifti).split('.')[0]
             crc = kwargs['cropping_coordinates']
