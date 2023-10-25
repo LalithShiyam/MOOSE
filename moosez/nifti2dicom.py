@@ -375,7 +375,7 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, croppin
     pydicom.config.datetime_conversion = True
     seriesinstanceUID = pydicom.uid.generate_uid()
 
-    seed = pydicom.read_file(dicom_seed_path)
+    seed = pydicom.read_file(dicom_seed_path[0])
 
     if os.path.isdir(nifti_path):
         nifti_list = [
@@ -387,8 +387,8 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, croppin
     else:
         sys.exit("No such file: " + nifti_path)
 
-    if not os.path.isfile(dicom_seed_path):
-        sys.exit("No such file: " + dicom_seed_path)
+    if not os.path.isfile(dicom_seed_path[0]):
+        sys.exit("No such file: " + dicom_seed_path[0])
 
     if os.path.isdir(output_path):
         pass
