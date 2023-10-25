@@ -225,12 +225,15 @@ def find_ct_dicom_folder(root_directory: str):
     return None
 
 
-def is_label_present(segmentation, label_value: int):
+def is_label_present(segmentation: object, label_value: int):
     """
     Finds whether a class label exists in a segmentation
 
-    :param root_directory: The directory to be searched for CT DICOMS files.
-    :type root_directory: str
+    :param segmentation: segmentation object
+    :type segmentation: SIMPLEITK object
+
+    :param label_value: the label to be checked
+    :type label_value: int
 
     """
     class_label_image = SimpleITK.BinaryThreshold(segmentation, lowerThreshold=label_value, upperThreshold=label_value)
