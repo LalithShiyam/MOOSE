@@ -16,7 +16,7 @@ if os.name == "nt":
     try:
         import wmi
     except ImportError:
-        subprocess.check_call(["pip", "install", wmi])
+        subprocess.check_call(["pip", "install", "wmi"])
 
     import wmi
 
