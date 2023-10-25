@@ -61,6 +61,27 @@ MIP_ROTATION_STEP = 40
 DISPLAY_VOXEL_SPACING = (3, 3, 3)
 FRAME_DURATION = 0.4
 
+# CIELab RECOMMENDED DISPLAY VALUES (DICOM)
+
+Display_Values = {
+        "spleen": [34214, 25028, 30581],
+        "kidney_right": [34885, 53486, 50171],
+        "kidney_left": [57980, 13133, 44981],
+        "gallbladder": [34989, 44420, 38577],
+        "liver": [54927, 30099, 29943],
+        "stomach": [516, 870, 15],
+        "aorta": [32854, 1429, 9981],
+        "inferior_vena_cava": [10023, 7630, 60124],
+        "portal_vein_and_splenic_vein": [9804, 6450, 25869],
+        "pancreas": [22222, 55221, 44760],
+        "adrenal_gland_right": [3350, 11002, 11884],
+        "adrenal_gland_left": [43340, 65201, 756],
+        "lung_upper_lobe_left": [63658, 27358, 57178],
+        "lung_lower_lobe_left": [33156, 20153, 44465],
+        "lung_upper_lobe_right": [8915, 35458, 16602],
+        "lung_middle_lobe_right": [36669, 54629, 31426],
+        "lung_lower_lobe_right": [45533, 42363, 52298]
+    }
 # ORGAN INDICES
 
 ORGAN_INDICES = {
