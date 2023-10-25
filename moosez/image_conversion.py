@@ -28,7 +28,6 @@ from typing import List, Dict
 import json
 import shutil
 import tempfile
-from datetime import datetime
 import SimpleITK
 import dicom2nifti
 import pydicom
@@ -255,68 +254,12 @@ def rename_nifti_files(nifti_dir: str, dicom_info: dict) -> None:
                 del dicom_info[filename]
 
 
-def find_segmentations_folders(directory):
-    moosez_folders = []
-    for root, dirs, files in os.walk(directory):
-        for dir_name in dirs:
-            if dir_name.startswith(constants.SEGMENTATIONS_FOLDER):
-                moosez_folders.append(os.path.join(root, dir_name))
-    return moosez_folders
-
-
-def find_ct_dicom_folder(root_directory):
-    for root, dirs, files in os.walk(root_directory):
-        for dir_name in dirs:
-            dir_path = os.path.join(root, dir_name)
-            dicom_files = [f for f in os.listdir(dir_path) if f.lower().endswith('.dcm')]
-            if dicom_files:
-                # Check the first DICOM file in the directory for modality
-                first_dicom_file = pydicom.dcmread(os.path.join(dir_path, dicom_files[0]))
-                if hasattr(first_dicom_file, 'Modality') and first_dicom_file.Modality == 'CT':
-                    return dir_path
-    return None
-
-
-def is_label_present(segmentation, label_value):
-    class_label_image = SimpleITK.BinaryThreshold(segmentation, lowerThreshold=label_value, upperThreshold=label_value)
-
-    label_size_filter = SimpleITK.LabelShapeStatisticsImageFilter()
-    label_size_filter.Execute(class_label_image)
-
-    return label_size_filter.GetNumberOfLabels() > 0
-
-
-def custom_sort_key(file_path):
-    # custom sorting key function to sort based on ImagePositionPatient[2]
-    ds = pydicom.dcmread(file_path)
-    return float(ds.ImagePositionPatient[2])
-
-
-def sorted_dicom_series(dicom_path: str):
-    dcm_files = [os.path.join(dicom_path, file) for file in os.listdir(dicom_path) if
-                 os.path.isfile(os.path.join(dicom_path, file))]
-    # Sorting the list of DICOM file paths using the custom sorting key
-    sorted_dcms = sorted(dcm_files, key=custom_sort_key)
-    return sorted_dcms
-
-def get_first_n_files(sorted_dcms: List[str], n: int):
-    selected_files = []
-    for i, file_path in enumerate(sorted_dcms):
-        if os.path.isfile(file_path):
-            selected_files.append(file_path)
-            if len(selected_files) == n:
-                break
-
-    if len(selected_files) < n:
-        print(f"Only {len(selected_files)} file(s) found in the list.")
-    return selected_files
-
 def nifti2dicom_process(subject_path: str, **kwargs: Dict):
     if os.path.isdir(subject_path):
-        ct_dicom_dir = find_ct_dicom_folder(subject_path)
-        sorted_dcms = sorted_dicom_series(ct_dicom_dir)
+        ct_dicom_dir = file_utilities.find_ct_dicom_folder(subject_path)
+        sorted_dcms = file_utilities.sorted_dicom_series(ct_dicom_dir)
 
-        segmentation_dir = find_segmentations_folders(subject_path)
+        segmentation_dir = file_utilities.find_segmentations_folders(subject_path)
         for i, seg_dir in enumerate(segmentation_dir):
             if os.path.exists(os.path.join(os.path.dirname(seg_dir), constants.DICOM_SEGS_FOLDER)):
                 continue
@@ -340,7 +283,7 @@ def nifti2dicom_process(subject_path: str, **kwargs: Dict):
                         if class_name == 'background':
                             continue
 
-                        if not is_label_present(original_seg, class_label):
+                        if not file_utilities.is_label_present(original_seg, class_label):
                             print(
                                 f"Label '{class_name}' with label value {class_label} not found in the original segmentation. "
                                 f"Skipping...")
