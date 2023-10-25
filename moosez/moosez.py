@@ -64,6 +64,17 @@ def main():
         metavar="<MAIN_DIRECTORY>",
         help="Specify the main directory containing subject folders."
     )
+
+    # DICOM Segmentations Output directory (optional)
+    parser.add_argument(
+        "-o", "--output_directory",
+        type=str,
+        required=False,
+        default=None,
+        metavar="<OUTPUT_DIRECTORY>",
+        help="Specify the output directory to write the DICOM segmentations. If not provided, "
+             "it will be written according to each subject's directory."
+    )
     
     # Name of the model to use for segmentation
     model_help_text = "Choose the model for segmentation from the following:\n" + "\n".join(AVAILABLE_MODELS)
@@ -75,7 +86,14 @@ def main():
         metavar="<MODEL_NAME>",
         help=model_help_text
     )
-    
+
+    # Optional flag used to trigger segmentations' bounding box cropping
+    parser.add_argument(
+        "-c", "--crop",
+        action="store_true",
+        help="Optional flag used to trigger segmentations' bounding box cropping."
+    )
+
     # Custom help option
     parser.add_argument(
         "-h", "--help",
@@ -208,6 +226,35 @@ def main():
         time.sleep(3)
         logging.info(
             f' {constants.ANSI_GREEN}[{i + 1}/{num_subjects}] Prediction done for {os.path.basename(subject)} using {model_name}!' f' | Elapsed time: {round(elapsed_time / 60, 1)} min{constants.ANSI_RESET}')
+
+        # ----------------------------------
+        # Nifti to DICOM Conversion
+        # ----------------------------------
+        # Performing nifti2dicom conversion on the nifti predictions
+        print('')
+        print(
+            f'{constants.ANSI_VIOLET} {emoji.emojize(":crystal_ball:")} Performing NIFTI to DICOM Conversion on the Predicted '
+            f'Segmentation{constants.ANSI_RESET}')
+        print('')
+        logging.info(' ')
+        logging.info(' Performing NIFTI to DICOM Conversion on the Predicted Segmentation')
+        logging.info(' ')
+        if file_utilities.find_ct_dicom_folder(subject) is None:
+            print(f'No DICOM CT study found in the directory {subject}. Unable to proceed.')
+            logging.info(f'No DICOM CT study found in the directory for subject '
+                         f'{os.path.basename(subject)}. Unable to proceed.')
+        else:
+            if args.output_directory is not None:
+                print(
+                    f'{constants.ANSI_VIOLET}{emoji.emojize(":crystal_ball:")} Output Directory for Writing DICOM Segmentations Specified'
+                    f'\n DICOM Segmentations will be Written to: {args.output_directory}{constants.ANSI_RESET}')
+                logging.info(' ')
+                logging.info(f' Output Directory for Writing DICOM Segmentations Specified: {args.output_directory}')
+                logging.info(' ')
+                image_conversion.nifti2dicom_process(subject, dicom_out_dir=args.output_directory,
+                                                     crop=args.crop)
+            else:
+                image_conversion.nifti2dicom_process(subject, crop=args.crop)
         # ----------------------------------
         # EXTRACT PET ACTIVITY
         # ----------------------------------
@@ -250,6 +297,7 @@ def main():
     spinner.succeed(f'{constants.ANSI_GREEN} All predictions done! | Total elapsed time for '
                     f'{len(moose_compliant_subjects)} datasets: {round(total_elapsed_time, 1)} min'
                     f' | Time per dataset: {round(time_per_dataset, 2)} min {constants.ANSI_RESET}')
+
 
 
 def moose(model_name: str, input_dir: str, output_dir: str, accelerator: str) -> None:

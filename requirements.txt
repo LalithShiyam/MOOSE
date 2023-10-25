@@ -3,7 +3,7 @@ nibabel~=3.2.2
 halo~=0.0.31
 pandas~=1.4.1
 SimpleITK~=2.2.1
-pydicom~=2.2.2
+pydicom~=2.4.3
 argparse~=1.4.0
 imageio~=2.16.1
 numpy

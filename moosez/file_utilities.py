@@ -15,14 +15,15 @@
 # The functions in this module can be imported and used in other modules within the moosez to perform file operations.
 #
 # ----------------------------------------------------------------------------------------------------------------------
-
+import pydicom
+import SimpleITK
 import glob
 import os
 import shutil
 import sys
 from datetime import datetime
 from multiprocessing import Pool
-
+from typing import List
 from moosez import constants
 
 
@@ -186,3 +187,96 @@ def find_pet_file(folder: str) -> str:
         raise ValueError("More than one PET file found in the directory.")
     else:
         return None
+
+
+def find_segmentations_folders(directory: str):
+    """
+    Finds the segmentation folders' directory
+
+    :param directory: The directory to be searched for "segmentation" folder.
+    :type directory: str
+
+    """
+    moosez_folders = []
+    for root, dirs, files in os.walk(directory):
+        for dir_name in dirs:
+            if dir_name.startswith(constants.SEGMENTATIONS_FOLDER):
+                moosez_folders.append(os.path.join(root, dir_name))
+    return moosez_folders
+
+
+def find_ct_dicom_folder(root_directory: str):
+    """
+    Finds the directory contaning the CT DICOM series
+
+    :param root_directory: The directory to be searched for CT DICOMS files.
+    :type root_directory: str
+
+    """
+    for root, dirs, files in os.walk(root_directory):
+        for dir_name in dirs:
+            dir_path = os.path.join(root, dir_name)
+            dicom_files = [f for f in os.listdir(dir_path) if f.lower().endswith('.dcm')]
+            if dicom_files:
+                # Check the first DICOM file in the directory for modality
+                first_dicom_file = pydicom.dcmread(os.path.join(dir_path, dicom_files[0]))
+                if hasattr(first_dicom_file, 'Modality') and first_dicom_file.Modality == 'CT':
+                    return dir_path
+    return None
+
+
+def is_label_present(segmentation: object, label_value: int):
+    """
+    Finds whether a class label exists in a segmentation
+
+    :param segmentation: segmentation object
+    :type segmentation: SIMPLEITK object
+
+    :param label_value: the label to be checked
+    :type label_value: int
+
+    """
+    class_label_image = SimpleITK.BinaryThreshold(segmentation, lowerThreshold=label_value, upperThreshold=label_value)
+
+    label_size_filter = SimpleITK.LabelShapeStatisticsImageFilter()
+    label_size_filter.Execute(class_label_image)
+
+    return label_size_filter.GetNumberOfLabels() > 0
+
+
+def custom_sort_key(file_path: str):
+    """
+    custom sorting key function to sort dcms based on ImagePositionPatient[2]
+
+    :param file_path: the path to a DICOM series directory
+    :type file_path: str
+    """
+    ds = pydicom.dcmread(file_path)
+    return float(ds.ImagePositionPatient[2])
+
+
+def sorted_dicom_series(dicom_path: str):
+    """
+    Sorts DICOM series based on a key
+
+    :param dicom_path: the path to a DICOM series directory to be sorted
+    :type dicom_path: str
+    """
+    dcm_files = [os.path.join(dicom_path, file) for file in os.listdir(dicom_path) if
+                 os.path.isfile(os.path.join(dicom_path, file))]
+    # Sorting the list of DICOM file paths using the custom sorting key
+    sorted_dcms = sorted(dcm_files, key=custom_sort_key)
+    return sorted_dcms
+
+
+def get_first_n_files(sorted_dcms: List[str], n: int):
+    selected_files = []
+    for i, file_path in enumerate(sorted_dcms):
+        if os.path.isfile(file_path):
+            selected_files.append(file_path)
+            if len(selected_files) == n:
+                break
+
+    if len(selected_files) < n:
+        print(f"Only {len(selected_files)} file(s) found in the list.")
+    return selected_files
