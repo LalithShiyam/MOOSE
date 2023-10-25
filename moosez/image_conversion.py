@@ -308,7 +308,7 @@ def nifti2dicom_process(subject_path: str, **kwargs: Dict):
                         SimpleITK.WriteImage(class_label_image, output_nifti_dir)
 
                     # Get n CT dcm seeds
-                    dicom_seed = get_first_n_files(sorted_dcms, 1)
+                    dicom_seed = file_utilities.get_first_n_files(sorted_dcms, 1)
 
                     if kwargs.get('dicom_out_dir', False):
                         moosez_folder = os.path.basename(os.path.dirname(seg_dir))
