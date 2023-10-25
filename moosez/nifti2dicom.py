@@ -9,6 +9,7 @@ import sys
 import tempfile
 import logging
 import shutil
+import json
 
 # The machine ID is platform-dependent
 if os.name == "nt":
@@ -22,21 +23,19 @@ else:
         machineID = file.readline().strip()
 
 
-
-def CreateSegmentation(img, seed):
+def CreateSegmentation(img, seed, siuid: str, cropping: bool):
     # Build dataset from Nifti img and DICOM seed
     ds = pydicom.Dataset()
 
     AssertMatchingInput(img, seed)
-
     CreatePatientModule(seed, ds)
     CreateGeneralStudyModule(seed, ds)
     CreatePatientStudyModule(seed, ds)
-    CreateGeneralSeriesModule(seed, ds)
+    CreateGeneralSeriesModule(seed, ds, siuid)
     CreateSegmentationSeriesModule(ds)
     CreateFrameOfReferenceModule(seed, ds)
     CreateGeneralEquipmentModule(ds)
-    CreateImagePixelModule(seed, ds)
+    CreateImagePixelModule(img, ds, seed, cropping)
     CreateSopCommonModule(seed, ds)
     CreateSegmentationImageModule(ds)
     CreateMultiFrameFunctionGroupsModule(img, ds, seed)
@@ -154,10 +153,10 @@ def CreateGeneralEquipmentModule(ds):
     ds.SoftwareVersions = softwareVersion
 
 
-def CreateGeneralSeriesModule(seed, ds):
-    seriesDescription = "Segmentation: " + seed.SeriesDescription
-    ds.SeriesInstanceUID = pydicom.uid.generate_uid()
+def CreateGeneralSeriesModule(seed, ds, siuid):
+    seriesDescription = "Segmentation: " + str(seed.SeriesDescription)
     ds.SeriesDescription = seriesDescription
+    ds.SeriesInstanceUID = siuid
     ds.SeriesNumber = None
     now = datetime.now()
     ds.SeriesDate = now.date()
@@ -174,9 +173,13 @@ def CreateGeneralStudyModule(seed, ds):
     ds.StudyDescription = seed.StudyDescription
 
 
-def CreateImagePixelModule(seed, ds):
-    ds.Columns = seed.Columns
-    ds.Rows = seed.Rows
+def CreateImagePixelModule(img, ds, seed, cropping):
+    if cropping:
+        ds.Columns = img.shape[0]
+        ds.Rows = img.shape[1]
+    else:
+        ds.Columns = seed.Columns
+        ds.Rows = seed.Rows
 
 
 def CreateMultiFrameDimensionModule(ds):
@@ -193,6 +196,15 @@ def CreateMultiFrameDimensionModule(ds):
     ds.DimensionIndexSequence = [item]
 
 
+def readJsonCIELabValues(segment_label: str):
+    with open("CIELabValues.json", "r") as json_file:
+        display_data = json.load(json_file)
+
+    # Extract the labels dictionary from the JSON data
+    cielab_values = display_data.get("DisplayValues", {})
+    return cielab_values[segment_label]
+
+
 def CreateMultiFrameFunctionGroupsModule(img, ds, seed):
     ds.InstanceNumber = 1
     now = datetime.now()
@@ -206,9 +218,9 @@ def CreateMultiFrameFunctionGroupsModule(img, ds, seed):
     item.SegmentNumber = 1
     item.SegmentLabel = GetSegmentLabel(img)
     item.SegmentAlgorithmType = "AUTOMATIC"  # when not MANUAL, set algorithm name
-    item.SegmentAlgorithmName = "an algorithm name"
+    item.SegmentAlgorithmName = "nnUNET"
     # convert RGA to CIELab or leave it to get any default color.
-    # item.RecommendedDisplayCIELabValue = ...
+    item.RecommendedDisplayCIELabValue = readJsonCIELabValues(item.SegmentLabel)
 
     # These should perhaps get different values for different segmented organs
     item.SegmentedPropertyCategoryCodeSequence = CreateCodeSequence(
@@ -358,14 +370,12 @@ def GetUuid():
     return machineID
 
 
-def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, **kwargs):
+def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, cropping=False):
     # Create DICOM conformant date and time
     pydicom.config.datetime_conversion = True
+    seriesinstanceUID = pydicom.uid.generate_uid()
 
-    seed1 = pydicom.read_file(dicom_seeds_dir[0])
-    seed2 = pydicom.read_file(dicom_seeds_dir[1])
-
-    slice_thickness = round(seed2.ImagePositionPatient[2] - seed1.ImagePositionPatient[2], 2)
+    seed = pydicom.read_file(dicom_seed_path)
 
     if os.path.isdir(nifti_path):
         nifti_list = [
@@ -377,8 +387,8 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, **kwarg
     else:
         sys.exit("No such file: " + nifti_path)
 
-    if not os.path.isfile(dicom_seeds_dir[0]):
-        sys.exit("No such file: " + dicom_seeds_dir[0])
+    if not os.path.isfile(dicom_seed_path):
+        sys.exit("No such file: " + dicom_seed_path)
 
     if os.path.isdir(output_path):
         pass
@@ -398,27 +408,14 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, **kwarg
     if len(nifti_list) > 1 and output_path.endswith(".dcm"):
         sys.exit("Incompatible args, multiple nifti inputs requires output to dir")
 
+
     temp_directory = tempfile.mkdtemp()
     for nifti in nifti_list:
-        if kwargs.get('cropping_coordinates', False):
-            class_name = os.path.basename(nifti).split('.')[0]
-            crc = kwargs['cropping_coordinates']
-            min_x, min_y, min_z, size_x, size_y, size_z = crc[class_name]
-            seed1.Columns = size_x
-            seed1.Rows = size_y
-
-            new_x = seed1.ImagePositionPatient[0] + (min_x * seed1.PixelSpacing[0])
-            new_y = seed1.ImagePositionPatient[1] + (min_y * seed1.PixelSpacing[1])
-            if seed1.SliceThickness is not None:
-                new_z = seed1.ImagePositionPatient[2] + (min_z * seed1.SliceThickness)
-            else:
-                new_z = seed1.ImagePositionPatient[2] + (min_z * slice_thickness)
-
-            seed1.ImagePositionPatient = [f'{new_x:.3f}', f'{new_y:.3f}', f'{new_z:.3f}']
+        print(nifti)
 
         img = nib.load(nifti)
 
-        ds = CreateSegmentation(img, seed1)
+        ds = CreateSegmentation(img, seed, seriesinstanceUID, cropping)
         ds.ensure_file_meta()
         ds.file_meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
 
@@ -431,4 +428,3 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seeds_dir, output_path, **kwarg
 
     shutil.copytree(temp_directory, output_path, dirs_exist_ok=True)
     shutil.rmtree(temp_directory)
-
