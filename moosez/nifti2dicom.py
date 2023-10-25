@@ -10,6 +10,7 @@ import tempfile
 import logging
 import shutil
 import json
+from moosez import constants
 
 # The machine ID is platform-dependent
 if os.name == "nt":
@@ -196,15 +197,6 @@ def CreateMultiFrameDimensionModule(ds):
     ds.DimensionIndexSequence = [item]
 
 
-def readJsonCIELabValues(segment_label: str):
-    with open("CIELabValues.json", "r") as json_file:
-        display_data = json.load(json_file)
-
-    # Extract the labels dictionary from the JSON data
-    cielab_values = display_data.get("DisplayValues", {})
-    return cielab_values[segment_label]
-
-
 def CreateMultiFrameFunctionGroupsModule(img, ds, seed):
     ds.InstanceNumber = 1
     now = datetime.now()
@@ -219,8 +211,9 @@ def CreateMultiFrameFunctionGroupsModule(img, ds, seed):
     item.SegmentLabel = GetSegmentLabel(img)
     item.SegmentAlgorithmType = "AUTOMATIC"  # when not MANUAL, set algorithm name
     item.SegmentAlgorithmName = "nnUNET"
-    # convert RGA to CIELab or leave it to get any default color.
-    item.RecommendedDisplayCIELabValue = readJsonCIELabValues(item.SegmentLabel)
+    # convert RGA to CIELab or leave it to get any default color
+
+    item.RecommendedDisplayCIELabValue = constants.Display_Values.get(item.SegmentLabel, None)
 
     # These should perhaps get different values for different segmented organs
     item.SegmentedPropertyCategoryCodeSequence = CreateCodeSequence(
