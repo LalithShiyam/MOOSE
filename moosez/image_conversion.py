@@ -28,7 +28,7 @@ from typing import List, Dict
 import json
 import shutil
 import tempfile
-
+from datetime import datetime
 import SimpleITK
 import dicom2nifti
 import pydicom
@@ -286,10 +286,34 @@ def is_label_present(segmentation, label_value):
     return label_size_filter.GetNumberOfLabels() > 0
 
 
+def custom_sort_key(file_path):
+    # custom sorting key function to sort based on ImagePositionPatient[2]
+    ds = pydicom.dcmread(file_path)
+    return float(ds.ImagePositionPatient[2])
+
+
+def sorted_dicom_series(dicom_path: str):
+    dcm_files = [os.path.join(dicom_path, file) for file in os.listdir(dicom_path) if
+                 os.path.isfile(os.path.join(dicom_path, file))]
+    # Sorting the list of DICOM file paths using the custom sorting key
+    sorted_dcms = sorted(dcm_files, key=custom_sort_key)
+    return sorted_dcms
+
+def get_first_n_files(sorted_dcms: List[str], n: int):
+    selected_files = []
+    for i, file_path in enumerate(sorted_dcms):
+        if os.path.isfile(file_path):
+            selected_files.append(file_path)
+            if len(selected_files) == n:
+                break
+
+    if len(selected_files) < n:
+        print(f"Only {len(selected_files)} file(s) found in the list.")
+    return selected_files
+
 def nifti2dicom_process(subject_path: str, **kwargs: Dict):
     if os.path.isdir(subject_path):
         ct_dicom_dir = find_ct_dicom_folder(subject_path)
-
         sorted_dcms = sorted_dicom_series(ct_dicom_dir)
 
         segmentation_dir = find_segmentations_folders(subject_path)
@@ -301,24 +325,26 @@ def nifti2dicom_process(subject_path: str, **kwargs: Dict):
             with open(dataset_json_path, "r") as json_file:
                 label_data = json.load(json_file)
 
-            # Extract the labels dictionary from the JSON data
             labels = label_data.get("labels", {})
 
             temp_directory = tempfile.mkdtemp()
             nifti_path = os.path.join(temp_directory, 'niftis')
             if not os.path.exists(nifti_path):
                 os.mkdir(nifti_path)
-            # Split the segmentation and save each class label
-            cropping_coordinates_dict = {}
+
             for class_name, class_label in labels.items():
                 if class_name == 'background':
                     continue
-                # Threshold the original segmentation to create a binary image for the current class label
+
+                if not is_label_present(original_seg, class_label):
+                    print(
+                        f"Label '{class_name}' with label value {class_label} not found in the original segmentation. "
+                        f"Skipping...")
+                    continue
+
                 class_label_image = SimpleITK.BinaryThreshold(original_seg, lowerThreshold=class_label,
                                                               upperThreshold=class_label)
-                # Set the output nifti file name using the class name
                 class_name = class_name.lower().replace(" ", "_")
-                # binary mask with the same header information and pixel type as the original segmentation
                 class_label_image.CopyInformation(original_seg)
 
                 if kwargs.get('crop', False):
@@ -327,25 +353,21 @@ def nifti2dicom_process(subject_path: str, **kwargs: Dict):
                     label_stats = SimpleITK.LabelShapeStatisticsImageFilter()
                     label_stats.Execute(copy_seg)
 
-                    # Get the bounding box in physical space
                     min_x, min_y, min_z, size_x, size_y, size_z = label_stats.GetRegion(class_label)
-                    cropping_coordinates = [min_x, min_y, min_z, size_x, size_y, size_z]
-                    # Crop the  segmentation using the ROI
                     class_label_image = SimpleITK.RegionOfInterest(class_label_image, (size_x, size_y, size_z),
                                                                       (min_x, min_y, min_z))
 
-                    cropping_coordinates_dict[class_name] = cropping_coordinates
-
-                # Save the class label as a separate .nii.gz file in a temporary directory
                 output_nifti_dir = os.path.join(nifti_path, f"{class_name}.nii.gz")
                 SimpleITK.WriteImage(class_label_image, output_nifti_dir)
 
             # Get n CT dcm seeds
-            dicom_seeds = get_first_n_files(sorted_dcms, 2)
+            dicom_seed = get_first_n_files(sorted_dcms, 1)
 
             if kwargs.get('dicom_out_dir', False):
-                subject_folder = os.path.basename(subject_path)
+                subject_folder = os.path.basename(subject_path) + '-' + datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
                 out_dir = kwargs['dicom_out_dir']
+                if not os.path.exists(out_dir):
+                    os.mkdir(out_dir)
                 dicom_folder = os.path.join(out_dir, subject_folder, constants.DICOM_SEGS_FOLDER)
             else:
                 dicom_folder = os.path.join(os.path.dirname(segmentation_dir[0]), constants.DICOM_SEGS_FOLDER)
@@ -353,8 +375,8 @@ def nifti2dicom_process(subject_path: str, **kwargs: Dict):
                 file_utilities.create_directory(dicom_folder)
 
             if kwargs.get('crop', False):
-                nifti2dicom.convert_nifti_to_dicom_seg(nifti_path, dicom_seeds, dicom_folder,
-                                                       cropping_coordinates=cropping_coordinates_dict)
+                nifti2dicom.convert_nifti_to_dicom_seg(nifti_path, dicom_seed, dicom_folder,
+                                                       cropping=kwargs.get('crop', False))
             else:
-                nifti2dicom.convert_nifti_to_dicom_seg(nifti_path, dicom_seeds, dicom_folder)
+                nifti2dicom.convert_nifti_to_dicom_seg(nifti_path, dicom_seed, dicom_folder)
             shutil.rmtree(temp_directory)
