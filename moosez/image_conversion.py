@@ -247,7 +247,11 @@ def rename_nifti_files(nifti_dir: str, dicom_info: dict) -> None:
             modality = dicom_info.get(filename, '')
             if modality:
                 new_filename = f"{modality}_{filename}"
-                os.rename(os.path.join(nifti_dir, filename), os.path.join(nifti_dir, new_filename))
+                old_filepath = os.path.join(nifti_dir, filename)
+                new_filepath = os.path.join(nifti_dir, new_filename)
+
+                # Move and overwrite the file if it already exists
+                shutil.move(old_filepath, new_filepath)
                 del dicom_info[filename]
 
 
