@@ -7,13 +7,17 @@ import os
 import pydicom
 import sys
 import tempfile
-import logging
 import shutil
-import json
 from moosez import constants
+import subprocess
 
 # The machine ID is platform-dependent
 if os.name == "nt":
+    try:
+        import wmi
+    except ImportError:
+        subprocess.check_call(["pip", "install", wmi])
+
     import wmi
 
     c = wmi.WMI()
