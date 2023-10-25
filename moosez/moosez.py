@@ -239,7 +239,7 @@ def main():
         logging.info(' ')
         logging.info(' Performing NIFTI to DICOM Conversion on the Predicted Segmentation')
         logging.info(' ')
-        if image_conversion.find_ct_dicom_folder(subject) is None:
+        if file_utilities.find_ct_dicom_folder(subject) is None:
             print(f'No DICOM CT study found in the directory {subject}. Unable to proceed.')
             logging.info(f'No DICOM CT study found in the directory for subject '
                          f'{os.path.basename(subject)}. Unable to proceed.')
