@@ -403,7 +403,6 @@ def convert_nifti_to_dicom_seg(nifti_path, dicom_seed_path, output_path, croppin
 
     temp_directory = tempfile.mkdtemp()
     for nifti in nifti_list:
-        print(nifti)
 
         img = nib.load(nifti)
 
